@@ -4,7 +4,7 @@ import DbHelper from './helpers/db';
 import mongoose from 'mongoose';
 import util from 'util';
 
-const { start, close, MongooseHistoryPlugin } = DbHelper(mongoose);
+const {start, close, MongooseHistoryPlugin} = DbHelper(mongoose);
 
 test.before('Start server', start);
 test.after.always('Close server', close);
@@ -34,7 +34,7 @@ const options = {
 
 const HistoryPlugin = MongooseHistoryPlugin(options);
 
-const CompiledSchema = mongoose.Schema({ name: 'string', size: 'string' });
+const CompiledSchema = mongoose.Schema({name: 'string', size: 'string'});
 CompiledSchema.plugin(HistoryPlugin);
 
 const embeddedOptionDefaults = {
@@ -43,12 +43,12 @@ const embeddedOptionDefaults = {
   modelName: '__embedded_histories'
 };
 const embeddedOptions = Object.assign({}, options, embeddedOptionDefaults);
-const EmbeddedSchema = mongoose.Schema({ name: 'string', size: 'string' });
+const EmbeddedSchema = mongoose.Schema({name: 'string', size: 'string'});
 EmbeddedSchema.plugin(MongooseHistoryPlugin(embeddedOptions));
 
 test('should add the plugin to a schema', async (t) => {
   // Create a new schema
-  let Schema = mongoose.Schema({ name: 'string', size: 'string' });
+  let Schema = mongoose.Schema({name: 'string', size: 'string'});
 
   // Initial schema must have no plugins
   expect(Schema.plugins).toEqual([]);
@@ -65,7 +65,7 @@ test('should add the plugin to a schema', async (t) => {
 });
 
 test('should test methods added to the schema', async (t) => {
-  let Schema = mongoose.Schema({ name: 'string', size: 'string' });
+  let Schema = mongoose.Schema({name: 'string', size: 'string'});
   Schema.plugin(HistoryPlugin);
 
   expect(Schema.methods).toEqual({
@@ -105,7 +105,7 @@ test('should create history when save', async (t) => {
       version: '0.0.0',
       collectionName: 'tank',
       collectionId: small._id,
-      diff: { _id: [String(small._id)], size: ['small'] },
+      diff: {_id: [String(small._id)], size: ['small']},
       timestamp: expect.any(Date)
     }
   ]);
@@ -128,7 +128,7 @@ test('should create history when save a change', async (t) => {
       version: '1.0.0',
       collectionName: 'tank',
       collectionId: small._id,
-      diff: { size: ['small', 'large'] },
+      diff: {size: ['small', 'large']},
       timestamp: expect.any(Date)
     },
     {
@@ -136,10 +136,75 @@ test('should create history when save a change', async (t) => {
       version: '0.0.0',
       collectionName: 'tank',
       collectionId: small._id,
-      diff: { _id: [String(small._id)], size: ['small'] },
+      diff: {_id: [String(small._id)], size: ['small']},
       timestamp: expect.any(Date)
     }
   ]);
+});
+
+test.only('should work with a more complex model', async (t) => {
+  let schema = mongoose.Schema(
+    {
+      name: 'string',
+      size: 'string',
+      infos: {
+        type: Object,
+        required: true,
+        default: {}
+      }
+    }
+  );
+  schema.plugin(HistoryPlugin);
+  let Tank = mongoose.model('tankExtended', schema);
+
+  let extended = new Tank({
+    name: 'foo',
+    size: 'small'
+  });
+  await extended.save();
+  extended.infos = {
+    baz: 'qux',
+    foo: 'bar',
+  };
+  await extended.save();
+  let diffs = await extended.getDiffs();
+
+  expect(diffs).toContainEqual({
+    _id: expect.any(Object),
+    collectionId: expect.any(Object),
+    collectionName: 'tankExtended',
+    diff:{"infos": [{"baz": "qux", "foo": "bar"}]},
+    timestamp: expect.any(Date),
+    version: '1.0.0',
+  });
+
+  extended.infos = {
+    foo: 'bar-updated'
+  };
+  await extended.save();
+  let diffs2 = await extended.getDiffs();
+  expect(diffs2).toContainEqual({
+    _id: expect.any(Object),
+    collectionId: expect.any(Object),
+    collectionName: 'tankExtended',
+    diff: {"infos": [{"foo": "bar-updated"}]},
+    timestamp: expect.any(Date),
+    version: '2.0.0',
+  });
+
+  extended.labels = ['test'];
+  await extended.save();
+  let diffs3 = await extended.getDiffs();
+  expect(diffs3).toContainEqual({
+    _id: expect.any(Object),
+    collectionId: expect.any(Object),
+    collectionName: 'tankExtended',
+    diff: {"infos": [{"labels": ["test"]}]},
+    timestamp: expect.any(Date),
+    version: '3.0.0',
+  });
+
+
 });
 
 test('should get a diff by version', async (t) => {
@@ -158,7 +223,7 @@ test('should get a diff by version', async (t) => {
     version: '1.0.0',
     collectionName: 'tank',
     collectionId: small._id,
-    diff: { size: ['small', 'large'] },
+    diff: {size: ['small', 'large']},
     timestamp: expect.any(Date)
   });
 });
@@ -180,7 +245,7 @@ test('should get all versions', async (t) => {
       version: '0.0.0',
       collectionName: 'tank',
       collectionId: small._id,
-      object: { _id: String(small._id), size: 'small' },
+      object: {_id: String(small._id), size: 'small'},
       timestamp: expect.any(Date)
     },
     {
@@ -188,7 +253,7 @@ test('should get all versions', async (t) => {
       version: '1.0.0',
       collectionName: 'tank',
       collectionId: small._id,
-      object: { _id: String(small._id), size: 'large' },
+      object: {_id: String(small._id), size: 'large'},
       timestamp: expect.any(Date)
     }
   ]);
@@ -210,7 +275,7 @@ test('should get a version', async (t) => {
     version: '1.0.0',
     collectionName: 'tank',
     collectionId: small._id,
-    object: { _id: String(small._id), size: 'large' },
+    object: {_id: String(small._id), size: 'large'},
     timestamp: expect.any(Date)
   });
 });
@@ -230,8 +295,8 @@ test('should compare two versions', async (t) => {
     diff: {
       size: ['small', 'large']
     },
-    left: { _id: String(small._id), size: 'small' },
-    right: { _id: String(small._id), size: 'large' }
+    left: {_id: String(small._id), size: 'small'},
+    right: {_id: String(small._id), size: 'large'}
   });
 });
 
@@ -253,7 +318,7 @@ test('should create history for sub documents', async (t) => {
       version: '1.0.0',
       collectionName: 'EmbeddedCollection',
       collectionId: tank._id,
-      diff: { size: ['small', 'large'] },
+      diff: {size: ['small', 'large']},
       timestamp: expect.any(Date)
     },
     {
@@ -261,7 +326,7 @@ test('should create history for sub documents', async (t) => {
       version: '0.0.0',
       collectionName: 'EmbeddedCollection',
       collectionId: tank._id,
-      diff: { _id: [String(tank._id)], size: ['small'] },
+      diff: {_id: [String(tank._id)], size: ['small']},
       timestamp: expect.any(Date)
     }
   ]);
@@ -276,7 +341,7 @@ test('should sort patch versions above 10 correctly', async (t) => {
 
   for (let i = 0; i < 10; i++) {
     small.size = 'small-' + i;
-    small.__history = { type: 'patch' };
+    small.__history = {type: 'patch'};
     await small.save();
   }
   let versions = await small.getVersions();
@@ -293,7 +358,7 @@ test('should sort minor versions above 10 correctly', async (t) => {
 
   for (let i = 0; i < 10; i++) {
     small.size = 'small-' + i;
-    small.__history = { type: 'minor' };
+    small.__history = {type: 'minor'};
     await small.save();
   }
   let versions = await small.getVersions();
@@ -334,7 +399,11 @@ test('should get a version above 10 correctly', async (t) => {
 });
 
 test('should save only the id of a populated field', async (t) => {
-  let Schema = mongoose.Schema({ name: 'string', size: 'string', driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver'} });
+  let Schema = mongoose.Schema({
+    name: 'string',
+    size: 'string',
+    driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver'}
+  });
   Schema.plugin(HistoryPlugin);
   let Tank = mongoose.model('tank2', Schema);
 
@@ -377,14 +446,18 @@ test('should save only the id of a populated field', async (t) => {
       version: '0.0.0',
       collectionName: 'tank2',
       collectionId: small._id,
-      diff: { _id: [String(small._id)], size: ['small'], driver: [String(driver._id)] },
+      diff: {_id: [String(small._id)], size: ['small'], driver: [String(driver._id)]},
       timestamp: expect.any(Date)
     }
   ]);
 });
 
 test('should not save a history if a property of a populated field is modified', async (t) => {
-  let Schema = mongoose.Schema({name: 'string', size: 'string', driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver2'} });
+  let Schema = mongoose.Schema({
+    name: 'string',
+    size: 'string',
+    driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver2'}
+  });
   Schema.plugin(HistoryPlugin);
   let Tank = mongoose.model('tank3', Schema);
 
@@ -433,16 +506,23 @@ test('should not save a history if a property of a populated field is modified',
       version: '0.0.0',
       collectionName: 'tank3',
       collectionId: small._id,
-      diff: { _id: [String(small._id)], size: ['small'], driver: [String(driver._id)] },
+      diff: {_id: [String(small._id)], size: ['small'], driver: [String(driver._id)]},
       timestamp: expect.any(Date)
     }
   ]);
 });
 
 test('should save the whole object of a populated field if savePopulated config is true', async (t) => {
-  let Schema = mongoose.Schema({name: 'string', size: 'string', driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver3'} });
+  let Schema = mongoose.Schema({
+    name: 'string',
+    size: 'string',
+    driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver3'}
+  });
   Schema.plugin(
-    MongooseHistoryPlugin(Object.assign({}, options, {modelName: '__populated_histories', ignorePopulatedFields: false}))
+    MongooseHistoryPlugin(Object.assign({}, options, {
+      modelName: '__populated_histories',
+      ignorePopulatedFields: false
+    }))
   );
   let Tank = mongoose.model('tank4', Schema);
 
@@ -484,16 +564,23 @@ test('should save the whole object of a populated field if savePopulated config 
       version: '0.0.0',
       collectionName: 'tank4',
       collectionId: small._id,
-      diff: { _id: [String(small._id)], size: ['small'], driver: [{_id: String(driver._id), name: 'John Doe', __v: 0}] },
+      diff: {_id: [String(small._id)], size: ['small'], driver: [{_id: String(driver._id), name: 'John Doe', __v: 0}]},
       timestamp: expect.any(Date)
     }
   ]);
 });
 
 test('should save a history if a property of a populated field is modified', async (t) => {
-  let Schema = mongoose.Schema({name: 'string', size: 'string', driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver4'} });
+  let Schema = mongoose.Schema({
+    name: 'string',
+    size: 'string',
+    driver: {type: mongoose.Schema.Types.ObjectId, ref: 'driver4'}
+  });
   Schema.plugin(
-    MongooseHistoryPlugin(Object.assign({}, options, {modelName: '__populated_histories2', ignorePopulatedFields: false}))
+    MongooseHistoryPlugin(Object.assign({}, options, {
+      modelName: '__populated_histories2',
+      ignorePopulatedFields: false
+    }))
   );
   let Tank = mongoose.model('tank5', Schema);
 
@@ -541,7 +628,7 @@ test('should save a history if a property of a populated field is modified', asy
       version: '1.0.0',
       collectionName: 'tank5',
       collectionId: small._id,
-      diff: { driver: {name: ['John Doe', 'Jane Doe']} },
+      diff: {driver: {name: ['John Doe', 'Jane Doe']}},
       timestamp: expect.any(Date)
     },
     {
@@ -549,7 +636,7 @@ test('should save a history if a property of a populated field is modified', asy
       version: '0.0.0',
       collectionName: 'tank5',
       collectionId: small._id,
-      diff: { _id: [String(small._id)], size: ['small'], driver: [{_id: String(driver._id), name: 'John Doe', __v: 0}] },
+      diff: {_id: [String(small._id)], size: ['small'], driver: [{_id: String(driver._id), name: 'John Doe', __v: 0}]},
       timestamp: expect.any(Date)
     }
   ]);
@@ -583,7 +670,7 @@ test('should test the readme example', async (t) => {
   };
 
   // Add the plugin to the schema with default options
-  let Schema = mongoose.Schema({ name: 'string', size: 'string' });
+  let Schema = mongoose.Schema({name: 'string', size: 'string'});
   Schema.plugin(MongooseHistoryPlugin(options));
 
   // Create a model
@@ -644,14 +731,16 @@ test('should test the readme example', async (t) => {
   let compare = await small.compareVersions('0.0.0', '1.0.0');
 
   expect(diffs).toEqual([
-    { version: '1.0.0',
-      diff: { name: ['Small tank'] },
+    {
+      version: '1.0.0',
+      diff: {name: ['Small tank']},
       event: 'updated',
       method: 'updateTank',
       timestamp: expect.any(Date)
     },
-    { version: '0.0.0',
-      diff: { _id: [String(small._id)], size: ['small'] },
+    {
+      version: '0.0.0',
+      diff: {_id: [String(small._id)], size: ['small']},
       event: 'created',
       method: 'newTank',
       timestamp: expect.any(Date)
@@ -663,20 +752,22 @@ test('should test the readme example', async (t) => {
     version: '1.0.0',
     collectionName: 'tank6',
     collectionId: small._id,
-    diff: { name: ['Small tank'] },
+    diff: {name: ['Small tank']},
     event: 'updated',
     method: 'updateTank',
     timestamp: expect.any(Date)
   });
 
   expect(versions).toEqual([
-    { version: '1.0.0',
+    {
+      version: '1.0.0',
       event: 'updated',
       method: 'updateTank',
       timestamp: expect.any(Date),
-      object: { name: 'Small tank' }
+      object: {name: 'Small tank'}
     },
-    { version: '0.0.0',
+    {
+      version: '0.0.0',
       event: 'created',
       method: 'newTank',
       timestamp: expect.any(Date),
@@ -704,8 +795,8 @@ test('should test the readme example', async (t) => {
   });
 
   expect(compare).toEqual({
-    diff: { name: ['Small tank'] },
-    left: { _id: String(small._id), size: 'small' },
+    diff: {name: ['Small tank']},
+    left: {_id: String(small._id), size: 'small'},
     right: {
       _id: String(small._id),
       size: 'small',

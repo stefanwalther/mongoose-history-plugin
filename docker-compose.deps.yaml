@@ -1,0 +1,15 @@
+version: "3.3"
+
+services:
+
+  # --------------------------------------
+  #              Infrastructure
+  # --------------------------------------
+  mongo:
+    image: mongo:4.1.10
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    logging:
+      driver: none
